@@ -25,7 +25,7 @@ if (!(Get-Command -Name Login-AzAccount)){
 #endregion
 
 #region (optional) Install Windows Admin Center in a GW mode 
-$GatewayServerName="WACGW"
+$GatewayServerName="Management"
 #Download Windows Admin Center if not present
 if (-not (Test-Path -Path "$env:USERPROFILE\Downloads\WindowsAdminCenter.msi")){
     $ProgressPreference='SilentlyContinue' #for faster download
