@@ -20,12 +20,12 @@ $Workspace=Get-AzOperationalInsightsWorkspace -ErrorAction SilentlyContinue | Ou
 #Create workspace if not available
 if (-not ($Workspace)){
     $SubscriptionID=(Get-AzContext).Subscription.ID
-    $ResourceGroupID=(Get-AzResourceGroup).ResourceGroup.ID
+    $ResourceGroupID=(Get-AzResourceGroup).ResourceGroupName
     $WorkspaceName="WSLabWorkspace-$ResourceGroupID"
     $ResourceGroupName=(Get-AzResourceGroup).ResourceGroupName
     #Pick Region
-    $Location=EastUS
-    $Workspace=New-AzOperationalInsightsWorkspace -ResourceGroupName $ResourceGroupName -Name $WorkspaceName -Location $location.Location
+    $Location="EastUS"
+    $Workspace=New-AzOperationalInsightsWorkspace -ResourceGroupName $ResourceGroupName -Name $WorkspaceName -Location EastUS
 }
 #endregion
 
@@ -81,12 +81,11 @@ Invoke-Command -ComputerName $LAGatewayName -ScriptBlock {
 #Workspace/Resource Group Name (same as Log Analytics)
 $SubscriptionID=(Get-AzContext).Subscription.ID
 $ResourceGroupID=(Get-AzResourceGroup).ResourceGroup.ID
-$WorkspaceName="WSLabWorkspace-$ResourceGroupID"
 $ResourceGroupName=(Get-AzResourceGroup).ResourceGroupName
-$HRWorkerServerName="HRWorker01"
+$HRWorkerServerName="Management"
 $AutomationAccountName="WSLabAutomationAccount"
 $HybridWorkerGroupName="WSLabHRGroup01"
-$LAGatewayName="LAGateway01"
+$LAGatewayName="Management"
 
 #Add solutions to the Log Analytics workspace
 #Get-AzOperationalInsightsIntelligencePack -ResourceGroupName $ResourceGroupName -WorkspaceName $WorkspaceName
@@ -96,7 +95,7 @@ foreach ($solution in $solutions){
 }
 
 #Add Automation Account
-$location=(Get-AzOperationalInsightsWorkspace -Name $WorkspaceName -ResourceGroupName $ResourceGroupName).Location
+$location="eastus2"
 New-AzAutomationAccount -Name $AutomationAccountName -ResourceGroupName $ResourceGroupName -Location $Location -Plan Free 
 
 #link workspace to Automation Account (via an ARM template deployment)
@@ -219,9 +218,9 @@ Invoke-Command -ComputerName $HRWorkerServerName -ScriptBlock {
 $SubscriptionID=(Get-AzContext).Subscription.ID
 $WorkspaceName="WSLabWorkspace-$SubscriptionID"
 $ResourceGroupName="WSLabWinAnalytics"
-$location=(Get-AzOperationalInsightsWorkspace -Name $WorkspaceName -ResourceGroupName $ResourceGroupName).Location
+$location="EastUS2"
 $LocationDisplayName=(Get-AzLocation | where Location -eq $location).DisplayName
-$LAGatewayName="LAGateway01"
+$LAGatewayName="Management"
 
 $Locations=@()
 $Locations+=@{LocationName="West Central US"     ;DataServiceURL="wcus-jobruntimedata-prod-su1.azure-automation.net";AgentServiceURL="wcus-agentservice-prod-1.azure-automation.net"}
@@ -300,7 +299,7 @@ Invoke-Command -ComputerName $servers -ScriptBlock {
 #region download and install dependency agent (for service map solution)
 #https://docs.microsoft.com/en-us/azure/azure-monitor/insights/vminsights-enable-hybrid-cloud#install-the-dependency-agent-on-windows
 $servers=1..4 | ForEach-Object {"S2D$_"}
-$servers+="LAGateway01","HRWorker01"
+$servers+="Management","Management"
 
 #download
 if (-not (Test-Path -Path "$env:USERPROFILE\Downloads\InstallDependencyAgent-Windows.exe")){
@@ -337,10 +336,6 @@ Invoke-Command -ComputerName $S2DClusters -ScriptBlock {get-storagesubsystem clu
 #region Cleanup Azure resources
 
 <#
-#remove resource group
-Get-AzResourceGroup -Name "WSLabWinAnalytics" | Remove-AzResourceGroup -Force
-
-
 #remove ServicePrincipal for WAC (all)
 Remove-AzADServicePrincipal -DisplayName WindowsAdminCenter* -Force
 Get-AzADApplication -DisplayNameStartWith WindowsAdmin |Remove-AzADApplication -Force
