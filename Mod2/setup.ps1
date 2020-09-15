@@ -1,29 +1,5 @@
 #region Prereqs
 
-#install cluster and AD powershell (just cluster is needed in following examples)
-$WindowsInstallationType=Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\' -Name InstallationType
-    if ($WindowsInstallationType -like "Server*"){
-        Install-WindowsFeature -Name RSAT-Clustering-PowerShell,RSAT-AD-PowerShell
-    }elseif (($WindowsInstallationType -eq "Client")){
-        #Install RSAT tools
-            $Capabilities="Rsat.ServerManager.Tools~~~~0.0.1.0","Rsat.FailoverCluster.Management.Tools~~~~0.0.1.0","Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
-            foreach ($Capability in $Capabilities){
-                Add-WindowsCapability -Name $Capability -Online
-            }
-    }
-
-#set-execution policy to remote signed for current process
-if ((Get-ExecutionPolicy) -ne "RemoteSigned"){Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force}
-
-#download Azure module
-if (!(Get-Command -Name Login-AzAccount)){
-    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-    Install-Module -Name AZ -Force
-}
- 
- 
-#endregion
-
 #region (optional) Install Windows Admin Center in a GW mode 
 $GatewayServerName="Management"
 #Download Windows Admin Center if not present
