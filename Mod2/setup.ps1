@@ -60,16 +60,16 @@ foreach ($computer in $computers){
 }
 #endregion
 
-#region Install Edge
-#install edge for azure portal and authentication (if code is running from DC)
-$ProgressPreference='SilentlyContinue' #for faster download
-Invoke-WebRequest -Uri "http://dl.delivery.mp.microsoft.com/filestreamingservice/files/40e309b4-5d46-4AE8-b839-bd74b4cff36e/MicrosoftEdgeEnterpriseX64.msi" -UseBasicParsing -OutFile "$env:USERPROFILE\Downloads\MicrosoftEdgeEnterpriseX64.msi"
-#Install Edge Beta
-Start-Process -Wait -Filepath msiexec.exe -Argumentlist "/i $env:UserProfile\Downloads\MicrosoftEdgeEnterpriseX64.msi /q"
-#start Edge
-start-sleep 5
-& "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+#region InstallChome
+$LocalTempDir = $env:TEMP; $ChromeInstaller = "ChromeInstaller.exe"; (new-object    System.Net.WebClient).DownloadFile('http://dl.google.com/chrome/install/375.126/chrome_installer.exe', "$LocalTempDir\$ChromeInstaller"); & "$LocalTempDir\$ChromeInstaller" /silent /install; $Process2Monitor =  "ChromeInstaller"; Do { $ProcessesFound = Get-Process | ?{$Process2Monitor -contains $_.Name} | Select-Object -ExpandProperty Name; If ($ProcessesFound) { "Still running: $($ProcessesFound -join ', ')" | Write-Host; Start-Sleep -Seconds 2 } else { rm "$LocalTempDir\$ChromeInstaller" -ErrorAction SilentlyContinue -Verbose } } Until (!$ProcessesFound)
 #endregion
+
+
+
+
+
+
+
 
 #region Connect to Azure and create Log Analytics workspace if needed
 #Login to Azure
@@ -78,7 +78,7 @@ Login-AzAccount -UseDeviceAuthentication
 #select context if more available
 $context=Get-AzContext -ListAvailable
 if (($context).count -gt 1){
-    $context | Out-GridView -OutpuMode Single | Set-AzContext
+    $context | Out-GridView -OutputMode Single | Set-AzContext
 }
 
 #select subscription
@@ -170,7 +170,7 @@ foreach ($solution in $solutions){
 }
 
 #Add Automation Account
-$location=(Get-AzOperationalInsightsWorkspace -Name $WorkspaceName -ResourceGroupName $ResourceGroupName).Location
+$location = 'eastus2'
 New-AzAutomationAccount -Name $AutomationAccountName -ResourceGroupName $ResourceGroupName -Location $Location -Plan Free 
 
 #link workspace to Automation Account (via an ARM template deployment)
@@ -293,7 +293,7 @@ Invoke-Command -ComputerName $HRWorkerServerName -ScriptBlock {
 $SubscriptionID=(Get-AzContext).Subscription.ID
 $WorkspaceName="WSLabWorkspace-$SubscriptionID"
 $ResourceGroupName="WSLabWinAnalytics"
-$location=(Get-AzOperationalInsightsWorkspace -Name $WorkspaceName -ResourceGroupName $ResourceGroupName).Location
+$location = 'eastus2'
 $LocationDisplayName=(Get-AzLocation | where Location -eq $location).DisplayName
 $LAGatewayName="LAGateway01"
 
